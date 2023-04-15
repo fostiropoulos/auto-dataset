@@ -47,9 +47,9 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 class MockDataset(Dataset):
     metadata_url = "https://iordanis.xyz/"
-    remote_urls = {"mock.zip": None}
+    remote_urls = {"mock.tar": None}
     name = "mock"
-    file_hash_map = {"mock.zip": "blahblah"}
+    file_hash_map = {"mock.tar": "blahblah"}
     dataset_type = "image"
     default_task_name = "task1"
 
@@ -68,17 +68,19 @@ class MockDataset(Dataset):
             archive_path = Path(root_path).joinpath(
                 self.__class__.__name__.lower(), archive_name
             )
+            rng = np.random.default_rng(seed=42)
+
             with tempfile.TemporaryDirectory() as fp:
                 for split in ["train", "val"]:
                     for i in range(size):
                         img = Image.fromarray(
-                            np.random.randint(0, 255, (150, 150, 3)).astype(np.uint8)
+                            rng.integers(0, 255, (150, 150, 3)).astype(np.uint8)
                         )
                         name = f"{i}_{split}.png"
                         img.save(Path(fp).joinpath(name))
-                shutil.make_archive(archive_path.as_posix(), "zip", root_dir=fp)
+                shutil.make_archive(archive_path.as_posix(), "tar", root_dir=fp)
                 self.file_hash_map[file_name] = self.file_hash(
-                    str(archive_path) + ".zip"
+                    str(archive_path) + ".tar"
                 )
             if mock_process:
                 kwargs["action"] = "process"
@@ -87,7 +89,7 @@ class MockDataset(Dataset):
     # ds.make_features(1024, DEVICE, clean=True, feature_extractor="clip")
 
     def _process(self, raw_data_dir: Path):
-        archive_path = raw_data_dir.joinpath("mock.zip")
+        archive_path = raw_data_dir.joinpath("mock.tar")
         extract(archive_path, raw_data_dir)
 
     def _make_metadata(self, raw_data_dir: Path):
@@ -127,7 +129,7 @@ def test_dataset(tmp_path: Path, caplog, ds_class=MockDataset):
     )
     with tempfile.TemporaryDirectory() as fp:
         ds = ds_class(fp)
-        assert assert_error_msg(lambda: ds.verify()).endswith(" is missing.")
+        assert assert_error_msg(lambda: ds.assert_downloaded()).endswith(" is missing.")
         assert assert_error_msg(lambda: ds.process()).endswith(" is missing.")
         ds.dataset_path.mkdir()
         ds.dataset_path.joinpath("test.txt").write_text("a")
@@ -146,7 +148,7 @@ def test_dataset(tmp_path: Path, caplog, ds_class=MockDataset):
         lambda: ds.download(),
         f"{tmp_path}/{class_directory} is not empty. You must use with flag clean `{class_name}.download(path, clean=True)` that will remove all files and re-process the dataset",
     )
-    assert ds.verify()
+    assert ds.assert_downloaded()
     assert len(ds) == len(ds.metadata["file_names"][ds.default_task_name]["train"])
     for f in iter(ds):
         assert f is not None
@@ -161,18 +163,18 @@ def test_dataset(tmp_path: Path, caplog, ds_class=MockDataset):
 def test_make_features(tmp_path: Path, ds_class=MockDataset):
     ds = ds_class(tmp_path, mock_download=True, mock_process=False)
     assert_error_msg(
-        lambda: ds.make_features(1000, DEVICE, feature_extractor="clip"),
+        lambda: ds.make_features(1000, DEVICE, feats_name="clip"),
         f"Missing {ds.metadata_path}. Please run `.process()` before making features.",
     )
 
     ds.process()
-    ds.make_features(1000, DEVICE, feature_extractor="clip")
+    ds.make_features(1000, DEVICE, feats_name="clip")
 
     assert_error_msg(
-        lambda: ds.make_features(1000, DEVICE, feature_extractor="clip"),
+        lambda: ds.make_features(1000, DEVICE, feats_name="clip"),
         f"Directory exists {ds.feats_path.joinpath('clip')}. Use `clean=True`",
     )
-    ds.make_features(1000, DEVICE, feature_extractor="clip", clean=True)
+    ds.make_features(1000, DEVICE, feats_name="clip", clean=True)
 
 
 def test_stream(tmp_path: Path):
@@ -188,31 +190,76 @@ def test_stream(tmp_path: Path):
                 dataset_kwargs[ds.name] = {"size": size}
 
         # Passing global argument
-        ds = Stream(tmp_path, datasets = dataset_kwargs, mock_download=True)
+        ds = Stream(tmp_path, datasets=dataset_kwargs, mock_download=True)
+
         for p in ds:
             pass
         assert len(ds) == sizes.sum()
+
         def _change_task():
-            ds.task_id=0
+            ds.task_id = 0
 
         assert_error_msg(
             _change_task,
             f"Can not change task_id after initialization.",
         )
-        ds = Stream(tmp_path, task_id = 0)
+        ds = Stream(tmp_path, task_id=0)
         assert len(ds) == sizes[0]
-        ds = Stream(tmp_path, task_id = 1)
+        ds = Stream(tmp_path, task_id=1)
         assert len(ds) == sizes[1]
+
 
 #     pass
 
 
+def test_stream_make(tmp_path: Path):
+    datasets = [MockDataset, MockDataset2]
+    sizes = (np.arange(len(datasets)) + 1) * 100
+    with mock.patch(
+        "stream.main.Stream.supported_datasets",
+        return_value=datasets,
+    ):
+        for ds, size in zip(datasets, sizes):
+            ds(tmp_path, size=size, mock_download=True)
+
+        with mock.patch(
+            "stream.dataset.Dataset.assert_downloaded", return_value=True
+        ), mock.patch("stream.dataset.Dataset.verify_downloaded", return_value=True):
+            # Passing global argument
+            import ray
+
+            ray.init()
+            ds = Stream(
+                tmp_path,
+                clean=True,
+                make=True,
+            )
+            ds = Stream(
+                tmp_path,
+                feats_name="clip",
+                make=True,
+                clean=True,
+                batch_size=128,
+                num_gpus=0.2,
+            )
+            ds = Stream(
+                tmp_path,
+                feats_name="clip",
+            )
+            ds.verify()
+        breakpoint()
+        return
+
+
 if __name__ == "__main__":
-    with tempfile.TemporaryDirectory() as fp:
-        test_dataset(Path(fp), caplog=None)
+    # with tempfile.TemporaryDirectory() as fp:
+    #     test_dataset(Path(fp), caplog=None)
+
+    # with tempfile.TemporaryDirectory() as fp:
+    #     test_make_features(Path(fp))
+
+    # with tempfile.TemporaryDirectory() as fp:
+    #     test_stream(Path(fp))
 
     with tempfile.TemporaryDirectory() as fp:
-        test_make_features(Path(fp))
-
-    with tempfile.TemporaryDirectory() as fp:
-        test_stream(Path(fp))
+        test_stream_make(Path(fp))

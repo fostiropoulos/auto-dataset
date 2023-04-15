@@ -83,5 +83,5 @@ class BaseDataset(torch.utils.data.Dataset, ABC):
         if self._is_init:
             return len(self.dataset)
         raise RuntimeError(
-            f"{self.__class__.__name__} is unitialized. Download and process the dataset."
+            f"{self.__class__.__name__} is uninitialized. Download and process the dataset."
         )

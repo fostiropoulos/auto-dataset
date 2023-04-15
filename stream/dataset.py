@@ -7,7 +7,7 @@ from abc import ABC
 from inspect import signature
 from pathlib import Path
 import tempfile
-from typing import Any, Callable, Literal, Optional, Tuple, Type, final
+from typing import Any, Callable, Literal, Optional, Tuple, final
 
 import lmdb
 import numpy as np
@@ -66,7 +66,7 @@ class Dataset(BaseDataset, ABC):
         **kwargs,
     ) -> None:
         super().__init__()
-
+        self.root_path = Path(root_path)
         self.class_name: str = self.__class__.__name__
         self.dataset_path = Path(root_path).joinpath(self.class_name.lower())
         self.metadata_path = self.dataset_path.joinpath("metadata.pickle")
@@ -94,7 +94,7 @@ class Dataset(BaseDataset, ABC):
         elif action == "process":
             self.process(clean=clean)
         elif action == "verify":
-            self.verify()
+            self.assert_downloaded()
         elif action is None:
             pass
         else:
@@ -150,7 +150,7 @@ class Dataset(BaseDataset, ABC):
 
     def _load_lmdb(self):
         assert (
-            self.feats_name not in self.models
+            self.feats_name in self.models
         ), f"Could not find {self.feats_name} in {self.models}"
 
         feat_path = self.feats_path.joinpath(self.feats_name, self.split)
@@ -177,9 +177,11 @@ class Dataset(BaseDataset, ABC):
         self._is_init = True
 
     @final
-    def verify(self) -> bool:
+    def assert_downloaded(self) -> bool:
+        class_name: str = self.__class__.__name__
+        dataset_path = Path(self.root_path).joinpath(class_name.lower())
         for file, url in self.remote_urls.items():
-            file_path = self.dataset_path.joinpath(file)
+            file_path = dataset_path.joinpath(file)
             assert file_path.exists(), f"{file_path} is missing."
             if url is not None and url.endswith(".git"):
                 repo = Repo(file_path)
@@ -191,6 +193,70 @@ class Dataset(BaseDataset, ABC):
                 self.file_hash_map[file] == file_hash
             ), f"Integrity check failed for {self.name} and file {file}."
 
+        return True
+
+    def verify(self):
+        return (
+            self.verify_downloaded(self.root_path)
+            and self.verify_processed(self.root_path)
+            and (
+                self.verify_feature_vectors(self.root_path, feats_name=self.feats_name)
+                if self.feats_name is not None
+                else True
+            )
+        )
+
+    @final
+    @classmethod
+    def verify_downloaded(cls, root_path) -> bool:
+        class_name: str = cls.__name__
+        dataset_path = Path(root_path).joinpath(class_name.lower())
+        for file, url in cls.remote_urls.items():
+            file_path = dataset_path.joinpath(file)
+            if not file_path.exists():
+                return False
+            if url is not None and url.endswith(".git"):
+                repo = Repo(file_path)
+                file_hash = repo.head.object.hexsha
+            else:
+                file_hash = cls.file_hash(file_path)
+
+            if not cls.file_hash_map[file] == file_hash:
+                return False
+
+        return True
+
+    @classmethod
+    def verify_processed(cls, root_path) -> bool:
+        class_name: str = cls.__name__
+        dataset_path = Path(root_path).joinpath(class_name.lower())
+        return dataset_path.joinpath("metadata.pickle").exists()
+
+    @classmethod
+    def verify_feature_vectors(cls, root_path, feats_name) -> bool:
+        if feats_name == "default":
+            feats_name = getattr(
+                cls, "default_feat_extractor", list(cls.models.keys())[0]
+            )
+
+        class_name: str = cls.__name__
+        dataset_path = Path(root_path).joinpath(class_name.lower())
+        for split in ["train", "val"]:
+            feat_path = dataset_path.joinpath("feats", feats_name, split)
+            if not feat_path.exists():
+                return False
+
+            lmdb_env = lmdb.open(
+                feat_path.as_posix(),
+                max_readers=1000,
+                readonly=True,
+                lock=False,
+                readahead=True,
+                meminit=False,
+            )
+            read_txn = lmdb_env.begin(write=False)
+            if read_txn.get(str("file_names").encode("utf-8")) is None:
+                return False
         return True
 
     @classmethod
@@ -209,19 +275,22 @@ class Dataset(BaseDataset, ABC):
         return md5.hexdigest()
 
     def download(self, clean=False):
+        only_local_files = []
         if clean:
-            self.__clean_files(self.dataset_path, None)
+            only_local_files = [k for k,v in self.remote_urls.items() if v is None]
+            logging.warn(f"Not removing local files {only_local_files}.")
+            self.__clean_files(self.dataset_path, only_local_files)
         all_files = {f.name for f in self.dataset_path.glob("*")}
         local_files = {k for k, v in self.remote_urls.items() if v is None}
 
-        if len(all_files.difference(local_files)) > 0:
+        if len(all_files.difference(local_files).difference(only_local_files)) > 0:
             raise FileExistsError(
                 f"{self.dataset_path} is not empty. You must use with flag clean `{self.class_name}.download(path, clean=True)` that will remove all files and re-process the dataset"
             )
         logger.info("Downloading: %s" % self.class_name)
         for filename, url in self.remote_urls.items():
             download_file(url, self.dataset_path, filename)
-        self.verify()
+        self.assert_downloaded()
         self.process()
 
     def _make_class_names(
@@ -257,7 +326,7 @@ class Dataset(BaseDataset, ABC):
                 f"Proccessed files {processed_files} already exist. You will need to pass argument `clean=True` that will remove the files and re-process the dataset."
             )
         assert (
-            self.verify()
+            self.assert_downloaded()
         ), "Corrupt dataset. You will need to use `download(clean=True)` before processing."
         logger.info("Processing: %s" % self.class_name)
         self._process(self.dataset_path)
@@ -309,14 +378,14 @@ class Dataset(BaseDataset, ABC):
         batch_size,
         device,
         clean=False,
-        feature_extractor: str | None = None,
+        feats_name: str | None = None,
         split: Literal["train", "val"] | None = None,
         verbose: bool = True,
     ):
-        if feature_extractor is None and self.feats_name is None:
+        if feats_name is None and self.feats_name is None:
             raise ValueError("Must specify `feats_name` or feature_extractor argument.")
-        elif feature_extractor is None:
-            feature_extractor = self.feats_name
+        elif feats_name is None:
+            feats_name = self.feats_name
         logger.info("Making Feats: %s" % self.class_name)
         if not self.metadata_path.exists():
             raise RuntimeError(
@@ -327,12 +396,12 @@ class Dataset(BaseDataset, ABC):
         if split is None:
             splits = self.splits
             assert (
-                not self.feats_path.joinpath(feature_extractor).exists() or clean
-            ), f"Directory exists {self.feats_path.joinpath(feature_extractor)}. Use `clean=True`"
+                not self.feats_path.joinpath(feats_name).exists() or clean
+            ), f"Directory exists {self.feats_path.joinpath(feats_name)}. Use `clean=True`"
         else:
             splits = [split]
         for _split in splits:
-            feat_model = self.models[feature_extractor](device)
+            feat_model = self.models[feats_name](device)
 
             file_names = []
 
@@ -343,7 +412,7 @@ class Dataset(BaseDataset, ABC):
                 file_names += file_name
             file_names = sorted(list(set(file_names)))
 
-            save_path = self.feats_path.joinpath(feature_extractor).joinpath(_split)
+            save_path = self.feats_path.joinpath(feats_name).joinpath(_split)
             if clean:
                 shutil.rmtree(save_path, ignore_errors=True)
             self._make_features_split(
