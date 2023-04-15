@@ -46,6 +46,7 @@ For extracting archives the following must be installed in your system and be on
 * [patool](https://wummel.github.io/patool/)
 * [unrar](https://packages.ubuntu.com/search?keywords=unrar)
 
+**TODO** Kaggle set-up
 **Feat Extraction**
 
 For extracting features, you will need `ray` for distributed execution. No support without ray as it will be too slow to finish at a reasonable time for many datasets.
