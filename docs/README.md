@@ -1,9 +1,16 @@
 
 <h1 style="text-align:center"> Batch Model Consolidation: A Multi-Task Model Consolidation Framework </h1>
-<hr style="border:2px solid gray">
 
 <h3 style="text-align:center"> Iordanis Fostiropoulos &nbsp;&nbsp;&nbsp; Jiaye Zhu &nbsp;&nbsp;&nbsp; Laurent Itti</h3>
 <p style="text-align:center"> University of Southern California</p>
+
+<p style="text-align:center"> 
+<a href="">[Arxiv]</a> 
+&nbsp;&nbsp;&nbsp; 
+<a href="https://github.com/fostiropoulos/stream_benchmark">[Code]</a>  
+&nbsp;&nbsp;&nbsp; 
+<a href="https://github.com/fostiropoulos/stream">[Dataset]</a> 
+</p>
 
 ## Abstract
 
@@ -28,11 +35,23 @@ only approach that can maintain performance at the end of 71 tasks.
 
 ## Overview
 
-![The intuition of our work](https://drive.google.com/file/d/1ZgwGy1Ta2u9Wim0D010uf7cSGw07qts9/view?usp=share_link)
+Intuition: similar to mini-batch training, batched task training can reduce the local minima and improve the convexity of the loss landscape.
 
-![A single incremental step of BMC](https://drive.google.com/file/d/1nG4kD2PCP0sMZxBRD3LN8fZjzYvQrpTJ/view?usp=share_link)
+<p style="text-align:center">
+<img src="https://drive.google.com/uc?export=view&id=1ZgwGy1Ta2u9Wim0D010uf7cSGw07qts9" alt="drawing" width="60%"/>
+</p>
 
-![Paralleled multi-expert training framework](https://drive.google.com/file/d/1NAswFVQtiNn6xkilUig42guGfvi-babV/view?usp=share_link)
+BMC optimizes multiple expert models from a single base model in parallel on **different** tasks,
+enforcing parameter-isolation. Experts are regularized during training to reduce the forgetting 
+on tasks learned by base model. A new base model is consolidated by **batched distillation** from the experts.
+
+![A single incremental step of BMC](https://drive.google.com/uc?export=view&id=1nG4kD2PCP0sMZxBRD3LN8fZjzYvQrpTJ)
+
+BMC supports distributed training where experts are trained locally on remote devices. 
+Artifacts are sent back to the central device for consolidation training. 
+The parallelism of this framework enables BMC to learn long task sequences efficiently.
+
+![Paralleled multi-expert training framework](https://drive.google.com/uc?export=view&id=1NAswFVQtiNn6xkilUig42guGfvi-babV)
 
 ## The Stream Dataset
 
@@ -44,6 +63,15 @@ See [the repository](https://github.com/fostiropoulos/stream/tree/cvpr_release) 
 
 ## Class-Incremental Learning
 
+We show on the Stream dataset with CLIP embedding that our method outperforms all other baselines in the Class-Incremental Learning scenario.
+Our implementation of BMC as well as the baselines can be found [here](https://github.com/fostiropoulos/stream_benchmark).
+
+![Experiment result on Stream](https://drive.google.com/uc?export=view&id=1rNjwxvOUYDcSOof9HTrD3eB0l0w_yM-8)
+
 
 
 ## Citation
+
+```
+
+```
