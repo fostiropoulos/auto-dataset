@@ -4,6 +4,14 @@
 <h3 style="text-align:center"> Iordanis Fostiropoulos &nbsp;&nbsp;&nbsp; Jiaye Zhu &nbsp;&nbsp;&nbsp; Laurent Itti</h3>
 <p style="text-align:center"> University of Southern California</p>
 
+<p style="text-align:center"> 
+<a href="">[Arxiv]</a> 
+&nbsp;&nbsp;&nbsp; 
+<a href="https://github.com/fostiropoulos/stream_benchmark">[Code]</a>  
+&nbsp;&nbsp;&nbsp; 
+<a href="https://github.com/fostiropoulos/stream">[Dataset]</a> 
+</p>
+
 ## Abstract
 
 In Continual Learning (CL), a model is required to learn a stream of tasks sequentially 
@@ -63,3 +71,7 @@ Our implementation of BMC as well as the baselines can be found [here](https://g
 
 
 ## Citation
+
+```
+
+```
