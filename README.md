@@ -81,7 +81,7 @@ custom_args = {
     # some datasets are built with different sub-task splits
     'core50': {
         'subset_name': 'object',
-        'transform': {my_custom_transform},
+        'transform': your_custom_transform,
         'train': False,
     },
 }
