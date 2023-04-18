@@ -53,18 +53,21 @@ to setup Kaggle.
 **Feature Extraction**
 
 For extracting features, you will need `ray` for distributed execution. No support without ray as it will be too slow to finish at a reasonable time for many datasets.
+Install Stream with the following commands:
 
-`pip install stream[dist]`
+1. `git clone https://github.com/fostiropoulos/stream.git`
+2. `cd stream`
+3. `pip install . stream[dist]`
 
 **Development**
 
 To contribute, you will need to install with option `[dev]`
 
-`pip install stream[dev]`
+`pip install . stream[dev]`
 
-### Download Features
+### [Download Features](https://deep.usc.edu/datasets/stream_feats.tar)
 
-TODO
+Extract `stream_feats.tar` and put it under `root_path` of your choice.
 
 ## Examples
 
@@ -103,6 +106,14 @@ Load the dataset with extracted features (must download or extract features firs
 ```
 # load dataset as feature vectors
 feats_ds = Stream(root_path, task_id=your_task_id, feats_name="clip")
+```
+
+If not using the extracted features, you will need to download all 
+data source files in the first run (download and processing is automated):
+
+```
+# load dataset as raw images/texts
+raw_ds = Stream(root_path, task_id=your_task_id, make=True)
 ```
 
 ### Adding New Dataset
