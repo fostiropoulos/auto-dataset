@@ -56,15 +56,18 @@ def assert_error_msg(fn, error_msg: str | None = None):
             return str(excp)
 
 
-def run_ds(ds: type[Dataset], args):
+def run_ds(ds: type[Dataset], args, verbose: bool = False):
     try:
         _ds = ds(**args)
-        t = tqdm(_ds)
-        t.set_description(str(ds.__name__))
-        for i in t:
+        if verbose:
+            _ds = tqdm(_ds)
+            _ds.set_description(str(ds.__name__))
+        for i in _ds:
             pass
-    except:
+    except Exception as e:
         logging.error(f"Error with {ds.__name__}")
+        # if verbose:
+        #     raise e
     pass
 
 
@@ -251,9 +254,6 @@ def test_stream(tmp_path: Path):
         assert len(ds) == sizes[1]
 
 
-#     pass
-
-
 def test_stream_make(tmp_path: Path):
     datasets = [MockDataset, MockDataset2]
     sizes = (np.arange(len(datasets)) + 1) * 100
@@ -294,31 +294,57 @@ def test_stream_make(tmp_path: Path):
 
 
 @pytest.mark.slow
-def test_all_dataset(root_path: Path):
-    s = Stream(
-        root_path,
-        transform=vision_transform,
-        # datasets=["art"],
-        dataset_kwargs={
+def test_all_dataset(
+    root_path: Path,
+    feats_name: str | None = None,
+    verbose: bool = False,
+    datasets: list[str] | None = None,
+):
+    kwargs = {}
+    if feats_name is None:
+        kwargs["dataset_kwargs"] = {
             "amazon": {"transform": text_transform},
             "yelp": {"transform": text_transform},
             "imdb": {"transform": text_transform},
-        },
-    )
+        }
+        kwargs["transform"] = (vision_transform,)
+    s = Stream(root_path, datasets=datasets, feats_name=feats_name, **kwargs)
     import multiprocessing as mp
 
     procs: list[mp.Process] = []
-    for i, ds in enumerate(s.dataset_classes):
-        args = copy.deepcopy(s.dataset_kwargs[s.task_names[i]])
-        if "feats_name" in args:
-            del args["feats_name"]
+    for train in [False, True]:
+        for i, ds in enumerate(s.dataset_classes):
+            args = copy.deepcopy(s.dataset_kwargs[s.task_names[i]])
+            args["train"] = train
 
-        p = mp.Process(target=run_ds, args=(ds, args), name=ds.__name__)
-        p.start()
-        procs.append(p)
+
+            p = mp.Process(target=run_ds, args=(ds, args, verbose), name=ds.__name__)
+            p.start()
+            procs.append(p)
     for p in procs:
         p.join()
 
+    breakpoint()
+    return
+    pass
+
+
+@pytest.mark.slow
+def test_features_vision(root_path: Path, verbose: bool = False):
+    datasets = [
+        d.name
+        for d in Stream.supported_datasets()
+        if d.name not in {"amazon", "yelp", "imdb"}
+    ]
+    test_all_dataset(root_path, feats_name="clip", datasets=datasets, verbose=verbose)
+    return
+    pass
+
+
+@pytest.mark.slow
+def test_features_text(root_path: Path, verbose: bool = False):
+    datasets = ["amazon", "yelp", "imdb"]
+    test_all_dataset(root_path, feats_name="gpt2", datasets=datasets, verbose=verbose)
     breakpoint()
     return
     pass
@@ -357,9 +383,25 @@ def test_make_features_text(root_path: Path):
     return
     pass
 
+@pytest.mark.slow
+def test_export_feats(root_path: Path, tmp_path:Path):
+    s = Stream(
+        root_path,
+    )
+    s.export_feats(tmp_path)
+
+    return
+    pass
+
 
 if __name__ == "__main__":
-    test_make_features_text(Path().home().joinpath("stream_ds"))
+    root_path = Path().home().joinpath("stream_ds")
+    test_export_feats(root_path, tmp_path=Path().home().joinpath("stream_feats"))
+    # test_features_vision(root_path, verbose=True)
+    # test_features_text(root_path, verbose=True)
+    # test_all_dataset(root_path, verbose=True, feats_name="clip")
+    # test_make_features_vision(Path().home().joinpath("stream_ds"))
+    # test_make_features_text(Path().home().joinpath("stream_ds"))
     # test_all_dataset(Path().home().joinpath("stream_ds"))
     # with tempfile.TemporaryDirectory() as fp:
     #     test_dataset(Path(fp), caplog=None)
