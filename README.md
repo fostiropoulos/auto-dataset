@@ -19,8 +19,8 @@ This dataset is a contribution of our paper Batch-Model-Consolidation at CVPR 20
 ## Why Stream?
 
 Stream provides a method to train on interdisciplinary tasks by projecting all datasets on the same dimension.
-A collection of 83 datasets are currently in Stream with easy extension of more possible dataset. 
-Stream offers convenient management to datasets and sourcing, and feature extraction utilities from 
+A collection of 83 datasets are currently in Stream with easy extension of more possible dataset.
+Stream offers convenient management to datasets and sourcing, and feature extraction utilities from
 pre-trained models to speed up & evaluate on downstream scenarios.
 
 ### Inter-Disciplinary Tasks
@@ -30,9 +30,9 @@ pre-trained models to speed up & evaluate on downstream scenarios.
 
 ### Feature Vectors
 
-We provide the preprocessed features to download for 83 datasets. 
+We provide the preprocessed features to download for 83 datasets.
 Features from state-of-the-art models CLIP, GPT2, ResNet, and ViT support fast evaluation by training a small downstream model,
-as well as multi-modal learning.
+as well as multi-modal learning. Our feature vector dataset is a **performant** memory mapped database.
 
 ## Install
 
@@ -46,8 +46,8 @@ For extracting archives the following must be installed in your system and be on
 
 **Kaggle Set-up**
 
-Stream uses Kaggle API to download the Kaggle datasets, you need to authenticate the API token before downloading. 
-Follow the instruction of [Kaggle API: Getting Started: Installation & Authentication](https://www.kaggle.com/docs/api) 
+Stream uses Kaggle API to download the Kaggle datasets, you need to authenticate the API token before downloading.
+Follow the instruction of [Kaggle API: Getting Started: Installation & Authentication](https://www.kaggle.com/docs/api)
 to setup Kaggle.
 
 **Feature Extraction**
@@ -70,10 +70,10 @@ TODO
 
 ### Basic Usage
 
-Easy to use with built-in 83 datasets and downloaded features. 
+Easy to use with built-in 83 datasets and downloaded features.
 A single dataset can be loaded by specifying `task_id` with custom arguments passed by `datasets`.
 The dataset is a Pytorch Dataset class and can be used with [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html) utilities.
-The list of supported datasets and their corresponding dataset names and task-ids can be found [HERE](assets/DATASET_TABLE.md). 
+The list of supported datasets and their corresponding dataset names and task-ids can be found [HERE](assets/DATASET_TABLE.md).
 An example:
 
 ```
@@ -107,7 +107,7 @@ feats_ds = Stream(root_path, task_id=your_task_id, feats_name="clip")
 
 ### Adding New Dataset
 
-You can fork this repository and add your own dataset. 
+You can fork this repository and add your own dataset.
 Follow the example in [test_dataset.py](tests/test_dataset.py) and complete the following abstract properties/methods:
 
 - `metadata_url`: Url to dataset webpage.
@@ -120,7 +120,7 @@ Follow the example in [test_dataset.py](tests/test_dataset.py) and complete the 
 - `_process()`: Custom pre-process of downloaded files, e.g. extracting archives.
 - `_make_metadata()`: Custom file-to-label mapping.
 
-**NOTICE:** adding new datasets will create a new set of task-ids for loading the datasets. 
+**NOTICE:** adding new datasets will create a new set of task-ids for loading the datasets.
 To check for new task-ids in Stream, run:
 
 ```
@@ -150,7 +150,7 @@ Specify `batch_size` and `num_gpus` for speeding up extraction.
 
 ```
 ds = Stream(
-    root_path, task_id=your_task_id, feats_name="clip", 
+    root_path, task_id=your_task_id, feats_name="clip",
     make=True, clean=True, batch_size=128, num_gpus=0.2,
 )
 # or

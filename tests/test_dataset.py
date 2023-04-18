@@ -337,14 +337,29 @@ def test_make_features_vision(root_path: Path):
         datasets=datasets,
     )
     ray.init()
-    s.make_features(128, 6/40, feats_name = "clip", clean=True)
+    s.make_features(128, 6 / 40, feats_name="clip")
+    breakpoint()
+    return
+    pass
+
+
+@pytest.mark.slow
+def test_make_features_text(root_path: Path):
+    datasets = ["amazon", "yelp", "imdb"]
+    s = Stream(
+        root_path,
+        transform=text_transform,
+        datasets=datasets,
+    )
+    ray.init()
+    s.make_features(128, 1, feats_name="gpt2")
     breakpoint()
     return
     pass
 
 
 if __name__ == "__main__":
-    test_make_features_vision(Path().home().joinpath("stream_ds"))
+    test_make_features_text(Path().home().joinpath("stream_ds"))
     # test_all_dataset(Path().home().joinpath("stream_ds"))
     # with tempfile.TemporaryDirectory() as fp:
     #     test_dataset(Path(fp), caplog=None)
