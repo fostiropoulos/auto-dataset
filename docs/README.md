@@ -1,4 +1,6 @@
+
 <h1 style="text-align:center"> Batch Model Consolidation: A Multi-Task Model Consolidation Framework </h1>
+<hr style="border:2px solid gray">
 
 <h3 style="text-align:center"> Iordanis Fostiropoulos &nbsp;&nbsp;&nbsp; Jiaye Zhu &nbsp;&nbsp;&nbsp; Laurent Itti</h3>
 <p style="text-align:center"> University of Southern California</p>
@@ -24,15 +26,24 @@ and the Stream dataset composed of 71 image classification tasks from diverse do
 and difficulties. Our method outperforms the next best CL approach by 70% and is the 
 only approach that can maintain performance at the end of 71 tasks.
 
-## Intuition & Overview
+## Overview
 
-![The intuition of our work](/assets/figures/intuition.png)
+![The intuition of our work](https://drive.google.com/file/d/1ZgwGy1Ta2u9Wim0D010uf7cSGw07qts9/view?usp=share_link)
 
-![A single incremental step of BMC](/assets/figures/BMC.png)
+![A single incremental step of BMC](https://drive.google.com/file/d/1nG4kD2PCP0sMZxBRD3LN8fZjzYvQrpTJ/view?usp=share_link)
+
+![Paralleled multi-expert training framework](https://drive.google.com/file/d/1NAswFVQtiNn6xkilUig42guGfvi-babV/view?usp=share_link)
+
+## The Stream Dataset
+
+Stream dataset implements the logic for processing and managing a large sequence of datasets, 
+and provides a method to train on interdisciplinary tasks by projecting all datasets on the same dimension,
+by extracting features from pre-trained models.
+
+See [the repository](https://github.com/fostiropoulos/stream/tree/cvpr_release) for Stream dataset installation and usages.
+
+## Class-Incremental Learning
 
 
-![Paralleled multi-expert training framework](/assets/figures/parallel.png)
-
-## Results
 
 ## Citation
