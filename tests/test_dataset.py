@@ -1,5 +1,7 @@
+import copy
 import io
 import logging
+import multiprocessing as mp
 import shutil
 import tempfile
 from contextlib import redirect_stderr, redirect_stdout
@@ -7,12 +9,40 @@ from pathlib import Path
 from unittest import mock
 
 import numpy as np
+import pytest
+import ray
 import torch
 from PIL import Image
+from torchvision import transforms
+from tqdm import tqdm
+from transformers import CLIPTokenizer
 
 from stream.dataset import Dataset
 from stream.main import Stream
 from stream.utils import extract
+
+vision_transform = transforms.Compose(
+    [
+        transforms.Resize(32),
+        transforms.CenterCrop(32),
+        transforms.ToTensor(),
+    ]
+)
+tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
+
+
+def text_transform(text):
+    return (
+        tokenizer(
+            text=text,
+            padding="max_length",
+            max_length=32**2 * 3,
+            truncation=True,
+            return_tensors="pt",
+        )["input_ids"]
+        .reshape(3, 32, 32)
+        .type(torch.float)
+    )
 
 
 def assert_error_msg(fn, error_msg: str | None = None):
@@ -24,6 +54,18 @@ def assert_error_msg(fn, error_msg: str | None = None):
             raise excp
         else:
             return str(excp)
+
+
+def run_ds(ds: type[Dataset], args):
+    try:
+        _ds = ds(**args)
+        t = tqdm(_ds)
+        t.set_description(str(ds.__name__))
+        for i in t:
+            pass
+    except:
+        logging.error(f"Error with {ds.__name__}")
+    pass
 
 
 def capture_output(fn, caplog=None):
@@ -86,8 +128,6 @@ class MockDataset(Dataset):
                 kwargs["action"] = "process"
         super().__init__(*args, **kwargs)
 
-    # ds.make_features(1024, DEVICE, clean=True, feature_extractor="clip")
-
     def _process(self, raw_data_dir: Path):
         archive_path = raw_data_dir.joinpath("mock.tar")
         extract(archive_path, raw_data_dir)
@@ -116,7 +156,9 @@ class MockDataset2(MockDataset):
     pass
 
 
-def test_dataset(tmp_path: Path, caplog, ds_class=MockDataset):
+def test_dataset(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, ds_class=MockDataset
+):
     # if caplog is not None:
     class_name = ds_class.__name__
     class_directory = class_name.lower()
@@ -190,7 +232,7 @@ def test_stream(tmp_path: Path):
                 dataset_kwargs[ds.name] = {"size": size}
 
         # Passing global argument
-        ds = Stream(tmp_path, datasets=dataset_kwargs, mock_download=True)
+        ds = Stream(tmp_path, dataset_kwargs=dataset_kwargs, mock_download=True)
 
         for p in ds:
             pass
@@ -251,7 +293,59 @@ def test_stream_make(tmp_path: Path):
         return
 
 
+@pytest.mark.slow
+def test_all_dataset(root_path: Path):
+    s = Stream(
+        root_path,
+        transform=vision_transform,
+        # datasets=["art"],
+        dataset_kwargs={
+            "amazon": {"transform": text_transform},
+            "yelp": {"transform": text_transform},
+            "imdb": {"transform": text_transform},
+        },
+    )
+    import multiprocessing as mp
+
+    procs: list[mp.Process] = []
+    for i, ds in enumerate(s.dataset_classes):
+        args = copy.deepcopy(s.dataset_kwargs[s.task_names[i]])
+        if "feats_name" in args:
+            del args["feats_name"]
+
+        p = mp.Process(target=run_ds, args=(ds, args), name=ds.__name__)
+        p.start()
+        procs.append(p)
+    for p in procs:
+        p.join()
+
+    breakpoint()
+    return
+    pass
+
+
+@pytest.mark.slow
+def test_make_features_vision(root_path: Path):
+    datasets = [
+        d.name
+        for d in Stream.supported_datasets()
+        if d.name not in {"amazon", "yelp", "imdb"}
+    ]
+    s = Stream(
+        root_path,
+        transform=vision_transform,
+        datasets=datasets,
+    )
+    ray.init()
+    s.make_features(128, 6/40, feats_name = "clip", clean=True)
+    breakpoint()
+    return
+    pass
+
+
 if __name__ == "__main__":
+    test_make_features_vision(Path().home().joinpath("stream_ds"))
+    # test_all_dataset(Path().home().joinpath("stream_ds"))
     # with tempfile.TemporaryDirectory() as fp:
     #     test_dataset(Path(fp), caplog=None)
 
@@ -261,5 +355,5 @@ if __name__ == "__main__":
     # with tempfile.TemporaryDirectory() as fp:
     #     test_stream(Path(fp))
 
-    with tempfile.TemporaryDirectory() as fp:
-        test_stream_make(Path(fp))
+    # with tempfile.TemporaryDirectory() as fp:
+    #     test_stream_make(Path(fp))
