@@ -131,9 +131,6 @@ dmypy.json
 # .vscode/
 
 *.zip
-*.jpeg
-*.png
-*.JPEG
 *.tar.gz
 *.tar
 *.gz
