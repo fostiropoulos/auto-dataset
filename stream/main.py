@@ -29,7 +29,7 @@ def make_dataset_features(
     feats_name=None,
 ):
     try:
-        setproctitle.setproctitle(f"Making features - {ds.name}")
+        setproctitle.setproctitle(f"Features - {ds.name}")
         dataset = make_ds(ds, dataset_args)
         return dataset.make_features(
             batch_size, "cuda", clean=clean, feats_name=feats_name, verbose=False
@@ -37,7 +37,6 @@ def make_dataset_features(
 
     except Exception as e:
         logging.error(f"Dataset - {ds.__name__} Error\n{traceback.format_exc()}")
-        raise e
 
 
 def make_ds(ds_class, args):
@@ -52,7 +51,8 @@ class Stream(td.Dataset):
     def __init__(
         self,
         root_path: Path,
-        datasets: dict[str, dict[str, Any]] | None = None,
+        datasets: List[str] | None = None,
+        dataset_kwargs: dict[str, dict[str, Any]] | None = None,
         task_id=None,
         make=False,
         clean=False,
@@ -60,18 +60,32 @@ class Stream(td.Dataset):
         batch_size=None,
         **kwargs,
     ) -> None:
+        """
+        If clean it re-downloads the dataset if `feats_name` are not provided or removes and remakes the feats if `feats_name` argument is provided.
+        """
         super().__init__()
 
         self.root_path = Path(root_path)
 
         dataset_classes = self.supported_datasets()
-        dataset_names: List[str] = [ds.name for ds in dataset_classes]  # type: ignore
+
+        dataset_names: List[str] = sorted([ds.name.lower() for ds in dataset_classes])
+        self.dataset_map = collections.OrderedDict(
+            (dict(zip(dataset_names, dataset_classes)).items())
+        )
+        if datasets is not None:
+            datasets = [d.lower() for d in datasets]
+            assert all(
+                [d in self.dataset_map for d in datasets]
+            ), f"not all datasets {datasets} were found in {dataset_names}"
+            dataset_names = datasets
+            self.dataset_map = collections.OrderedDict(
+                {k: v for k, v in self.dataset_map.items() if k in dataset_names}
+            )
         assert len(set(dataset_names)) == len(
             dataset_names
-        ), "Duplicate dataset names found."
-        self.dataset_map = collections.OrderedDict(
-            sorted(dict(zip(dataset_names, dataset_classes)).items())
-        )
+        ), f"Duplicate dataset names found {dataset_names}"
+
         self.task_names: List[str] = list(self.dataset_map.keys())
         self.dataset_classes: list[Type[Dataset]] = list(self.dataset_map.values())
         self.dataset = None
@@ -79,14 +93,14 @@ class Stream(td.Dataset):
         for name in self.task_names:
             args = {"root_path": root_path}
             args.update(copy.deepcopy(kwargs))
-            if datasets is not None and name in datasets:
-                aux_args = copy.deepcopy(datasets[name])
+            if dataset_kwargs is not None and name in dataset_kwargs:
+                aux_args = copy.deepcopy(dataset_kwargs[name])
             else:
                 aux_args = {}
             args.update(aux_args)
             self.dataset_kwargs[name] = args
-        if datasets is not None:
-            for ds_name in datasets:
+        if dataset_kwargs is not None:
+            for ds_name in dataset_kwargs:
                 if ds_name not in self.task_names:
                     raise ValueError(
                         f"{ds_name} not found in loaded tasks {self.task_names}."
@@ -101,6 +115,8 @@ class Stream(td.Dataset):
 
     def __getitem__(self, index):
         if self.task_id is None:
+            if index < 0:
+                index = len(self.dataset) + index
             return self.dataset[index], index
         return self.dataset[index]
 
@@ -187,7 +203,6 @@ class Stream(td.Dataset):
 
     def _make(self, clean=False):
         procs: List[mp.Process] = []
-        # make_dataset_feats = []
         for i, ds in enumerate(self.dataset_classes):
             args = copy.deepcopy(self.dataset_kwargs[self.task_names[i]])
             if "feats_name" in args:
@@ -290,9 +305,7 @@ class Stream(td.Dataset):
         return dataset_classes
 
     def verify(self):
-        assert all(
-            [
-                make_ds(self.dataset_classes[self.task_names.index(k)], v).verify()
-                for k, v in self.dataset_kwargs.items()
-            ]
-        )
+        return {
+            k: make_ds(self.dataset_classes[self.task_names.index(k)], v).verify()
+            for k, v in self.dataset_kwargs.items()
+        }

@@ -1,4 +1,6 @@
-import shutil
+import copy
+import ssl
+from unittest import mock
 import urllib.request
 from pathlib import Path
 
@@ -69,4 +71,8 @@ def download_file(url: str, save_dir: Path, filename: str):
         ), f"Different dataset {filename} with repository working dir"
     else:
         save_path = save_dir.joinpath(filename)
+        _fn = copy.deepcopy(ssl._create_default_https_context)
+        _fn2 = copy.deepcopy(ssl._create_unverified_context)
+        ssl._create_default_https_context = _fn2
         urllib.request.urlretrieve(url, save_path)
+        ssl._create_default_https_context = _fn
