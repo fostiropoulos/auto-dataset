@@ -25,7 +25,6 @@ class Kermany2018(Dataset):
     default_task_name ="none"
 
     def _process(self, raw_data_dir: Path):
-        # TODO there is a bug in extraction but don't know why
         for archive in self.remote_urls.keys():
             archive_path = raw_data_dir.joinpath(archive)
             folder_name = archive_path.stem.lower()

@@ -169,9 +169,10 @@ class Dataset(BaseDataset, ABC):
             meminit=False,
         )
         self.read_txn = self.lmdb_env.begin(write=False)
-        assert self._feat_loader(
-            "file_names"
-        ), f"Corrupt feats dataset {self.class_name}."
+        try:
+            self._feat_loader("file_names")
+        except Exception as e:
+            raise RuntimeError(f"Corrupt feats dataset {self.class_name}.") from e
         self._is_init = True
 
     @final

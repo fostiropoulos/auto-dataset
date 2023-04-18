@@ -54,7 +54,7 @@ class Rvl(Dataset):
             "14": "resume",
             "15": "memo",
         }
-        # TODO rglob is really slow for large dataset. The paths should be fixed.
+        # TODO (fixme) rglob is really slow for large dataset. The paths should be fixed.
         train_images = list(raw_data_dir.rglob("train.txt"))[0]
         val_images = list(raw_data_dir.rglob("test.txt"))[0]
         image_folder = list(raw_data_dir.rglob("images"))[0]
