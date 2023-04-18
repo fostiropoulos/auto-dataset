@@ -10,12 +10,15 @@ from inspect import isclass
 from pathlib import Path
 from pkgutil import iter_modules
 from typing import Any, List, Type
+
+import lmdb
 import numpy as np
 import setproctitle
+import torch
 import torch.utils.data as td
 import tqdm
 from torch.utils.data import ConcatDataset
-import torch
+
 from stream.dataset import Dataset
 
 PACKAGE_DATASET_DIR = Path(__file__).parent.joinpath("datasets").resolve().as_posix()
@@ -107,7 +110,7 @@ class Stream(td.Dataset):
                     )
         if make and "feats_name" not in kwargs:
             self._make(clean=clean)
-        elif make and "feats_name" in kwargs:
+        elif make and "feats_name" in kwargs and kwargs["feats_name"] is not None:
             self._make(clean=False)
             self.make_features(batch_size=batch_size, num_gpus=num_gpus, clean=clean)
 
@@ -146,6 +149,9 @@ class Stream(td.Dataset):
                         f"export directory {save_path} already exists. Either run with arguments `clean_make=True` or remove the directory."
                     )
                 save_path.mkdir(exist_ok=True, parents=True)
+
+                db = lmdb.open(source_path.as_posix())
+                db.copy(save_path.as_posix())
 
     @cached_property
     def task_end_idxs(self):
