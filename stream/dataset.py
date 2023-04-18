@@ -24,10 +24,6 @@ from stream.feat_extractors.vit import ViT
 from stream.utils import download_file
 
 
-def no_collate_fn(p):
-    return p
-
-
 # NOTE: this property should be set really high.
 # does not really allocate 1TB but it is the limit
 # of the databse size.
@@ -124,7 +120,9 @@ class Dataset(BaseDataset, ABC):
     def _init_actions(self, **kwargs):
         self.metadata = torch.load(self.metadata_path)
         self.dataset = self.metadata["file_names"][self.current_task_name][self.split]
-        assert len(self.dataset) > 0, f"No files found in the dataset {self.dataset}."
+        assert (
+            len(self.dataset) > 0
+        ), f"No files found in the dataset {self.class_name}."
         # filepath, label list
         # filepath must be a relative path to raw_data_dir
         self.class_names = self.metadata["class_names"]
@@ -196,15 +194,11 @@ class Dataset(BaseDataset, ABC):
         return True
 
     def verify(self):
-        return (
-            self.verify_downloaded(self.root_path)
-            and self.verify_processed(self.root_path)
-            and (
-                self.verify_feature_vectors(self.root_path, feats_name=self.feats_name)
-                if self.feats_name is not None
-                else True
+        if self.feats_name is not None:
+            return self.verify_feature_vectors(
+                self.root_path, feats_name=self.feats_name
             )
-        )
+        return self.verify_processed(self.root_path)
 
     @final
     @classmethod
@@ -277,7 +271,7 @@ class Dataset(BaseDataset, ABC):
     def download(self, clean=False):
         only_local_files = []
         if clean:
-            only_local_files = [k for k,v in self.remote_urls.items() if v is None]
+            only_local_files = [k for k, v in self.remote_urls.items() if v is None]
             logging.warn(f"Not removing local files {only_local_files}.")
             self.__clean_files(self.dataset_path, only_local_files)
         all_files = {f.name for f in self.dataset_path.glob("*")}
@@ -325,8 +319,8 @@ class Dataset(BaseDataset, ABC):
             raise FileExistsError(
                 f"Proccessed files {processed_files} already exist. You will need to pass argument `clean=True` that will remove the files and re-process the dataset."
             )
-        assert (
-            self.assert_downloaded()
+        assert self.verify_downloaded(
+            self.root_path
         ), "Corrupt dataset. You will need to use `download(clean=True)` before processing."
         logger.info("Processing: %s" % self.class_name)
         self._process(self.dataset_path)
@@ -377,8 +371,8 @@ class Dataset(BaseDataset, ABC):
         self,
         batch_size,
         device,
-        clean=False,
         feats_name: str | None = None,
+        clean=False,
         split: Literal["train", "val"] | None = None,
         verbose: bool = True,
     ):
