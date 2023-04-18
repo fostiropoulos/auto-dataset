@@ -111,7 +111,7 @@ You can fork this repository and add your own dataset.
 Follow the example in [test_dataset.py](tests/test_dataset.py) and complete the following abstract properties/methods:
 
 - `metadata_url`: Url to dataset webpage.
-- `remote_urls`: File names and download urls. See [here](assets/REMOTE_SOURCES.md) for loading from different types of sources.
+- `remote_urls`: File names and download urls. See [here](assets/REMOTE_SOURCES.md) for loading and processing different types of sources.
 - `name`: Dataset name.
 - `file_hash_map`: MD5 hash map of data files for verification.
 - `dataset_type`: Dataset modality, one of `image` and `text`.
@@ -120,7 +120,7 @@ Follow the example in [test_dataset.py](tests/test_dataset.py) and complete the 
 - `_process()`: Custom pre-process of downloaded files, e.g. extracting archives.
 - `_make_metadata()`: Custom file-to-label mapping.
 
-**NOTICE:** adding new datasets will create a new set of task-ids for loading the datasets.
+**IMPORTANT:** adding new datasets will create a new set of task-ids for loading the datasets.
 To check for new task-ids in Stream, run:
 
 ```
