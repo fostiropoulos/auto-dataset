@@ -65,7 +65,7 @@ To contribute, you will need to install with option `[dev]`
 
 `pip install . stream[dev]`
 
-### [Download Features](https://deep.usc.edu/datasets/stream_feats.tar)
+### [Download Features](https://drive.google.com/file/d/1insLK3FoGw-UEQUNnhzyxsql7z28lplZ/view?usp=sharing)
 
 Extract `stream_feats.tar` and put it under `root_path` of your choice.
 
@@ -73,14 +73,16 @@ Extract `stream_feats.tar` and put it under `root_path` of your choice.
 
 ### Basic Usage
 
+**Loading a single dataset**
+
 Easy to use with built-in 82 datasets and downloaded features.
-A single dataset can be loaded by specifying `task_id` with custom arguments passed by `datasets`.
+A single dataset can be loaded by specifying `task_id` with custom arguments passed by `datasets_kwargs`.
 The dataset is a Pytorch Dataset class and can be used with [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html) utilities.
 The list of supported datasets and their corresponding dataset names and task-ids can be found [HERE](assets/DATASET_TABLE.md).
 An example:
 
 ```
-custom_args = {
+custom_kwargs = {
     # some datasets are built with different sub-task splits
     'core50': {
         'subset_name': 'object',
@@ -89,9 +91,23 @@ custom_args = {
     },
 }
 # load Core50
-ds = Stream(root_path, task_id=15, datasets=custom_args)
+ds = Stream(root_path, task_id=15, datasets_kwargs=custom_kwargs)
 dl = DataLoader(ds, *args, **kwargs)
 ```
+
+**Loading a subset of all datasets**
+
+Specify a list of datasets to use only a subset of datasets.
+**IMPORTANT**: task-ids will be re-mapped by the alphabetical order of the list of datasets.
+
+```
+# use only the above three datasets, with dataset-ids:
+# cifar10 - 0, svhn - 1, tinyimagenet - 2
+use_datasets = ['cifar10', 'svhn', 'tinyimagenet']
+ds_cifar10 = Stream(root_path, task_id=0, datasets=use_datasets)
+```
+
+**Loading all datasets as one big dataset**
 
 Alternatively, load all datasets as a ConcatDataset by not specifying `task_id`:
 
@@ -101,12 +117,16 @@ all_ds = Stream(root_path, datasets=custom_args)
 dl = DataLoader(all_ds, *args, **kwargs)
 ```
 
+**Using extracted feature vectors**
+
 Load the dataset with extracted features (must download or extract features first):
 
 ```
 # load dataset as feature vectors
 feats_ds = Stream(root_path, task_id=your_task_id, feats_name="clip")
 ```
+
+**Making dataset metadata**
 
 If not using the extracted features, you will need to download all 
 data source files in the first run (download and processing is automated):
