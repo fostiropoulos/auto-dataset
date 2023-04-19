@@ -153,7 +153,7 @@ class Dataset(BaseDataset, ABC):
 
         feat_path = self.feats_path.joinpath(self.feats_name, self.split)
         if not feat_path.exists():
-            fn_signature = f".make_features{signature(self.make_features)}"
+            fn_signature = f"make_features{signature(self.make_features)}"
             logger.warn(
                 f"Could not find a features file in {self.dataset_path}. You will need to use `{self.class_name}.{fn_signature}` or initialize with action=`make_features`"
             )

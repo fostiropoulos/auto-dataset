@@ -37,7 +37,6 @@ def _test_backbone_helper(model: FeatExtractor, task: Literal["text", "image"]):
 
     assert feats.shape[1] == model.OUTPUT_SHAPE
     model_name = model.__class__.__name__
-    # torch.save(feats, FEATS_FOLDER.joinpath(f"{model_name}_{task}.pt"))
     stored_feats = torch.load(FEATS_FOLDER.joinpath(f"{model_name}_{task}.pt"))
     assert torch.isclose(feats, stored_feats).all()
 

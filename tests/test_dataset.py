@@ -162,7 +162,6 @@ class MockDataset2(MockDataset):
 def test_dataset(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, ds_class=MockDataset
 ):
-    # if caplog is not None:
     class_name = ds_class.__name__
     class_directory = class_name.lower()
 

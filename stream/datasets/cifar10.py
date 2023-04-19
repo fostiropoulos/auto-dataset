@@ -21,7 +21,7 @@ class Cifar10(Dataset):
     file_hash_map = {"cifar-10-python.tar.gz": "c58f30108f718f92721af3b95e74349a"}
     dataset_type = "image"
     default_task_name ="none"
-    default_feat_extractor = "vit"
+    default_feat_extractor = "clip"
 
     def _process(self, raw_data_dir: Path):
         for archive in self.remote_urls.keys():

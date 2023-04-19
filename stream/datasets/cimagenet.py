@@ -13,6 +13,7 @@ from tqdm import tqdm
 from stream.dataset import Dataset
 from stream.utils import extract, is_archive
 
+
 # TODO Clean-up
 class CImageNet(Dataset):
     metadata_url = ""
@@ -22,9 +23,9 @@ class CImageNet(Dataset):
     name = "cimagenet"
     file_hash_map = {"cinic10.zip": "2fb34ba48517aff6e886d01faa80cc65"}
     dataset_type = "image"
-    default_task_name ="none"
+    default_task_name = "none"
 
-    default_feat_extractor = "vit"
+    default_feat_extractor = "clip"
 
     def _process(self, raw_data_dir: Path):
         for archive in self.remote_urls.keys():
@@ -87,6 +88,5 @@ if __name__ == "__main__":
         )
         for s in tqdm(dataset):
             pass
-
 
     pass

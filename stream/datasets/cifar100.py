@@ -22,7 +22,7 @@ class Cifar100(Dataset):
     dataset_type = "image"
     default_task_name ="none"
 
-    default_feat_extractor = "vit"
+    default_feat_extractor = "clip"
     def _process(self, raw_data_dir: Path):
         for archive in self.remote_urls.keys():
             archive_path = raw_data_dir.joinpath(archive)

@@ -54,7 +54,7 @@ class Inaturalist(Dataset):
 
     def _make_metadata(self, raw_data_dir: Path):
         file_names = {}
-        subset_indices = {}  # {k: [] for k in self.subset_names}
+        subset_indices = {}
         for split in ["train", "val"]:
             base_folder = list(raw_data_dir.rglob(split))[-1].parent
             annotation_file = list(raw_data_dir.rglob(f"{split}.json"))[0]
@@ -69,7 +69,6 @@ class Inaturalist(Dataset):
                 # NOTE: below is the original dataset implementation of using the common name as a label.
                 # We use the class as a label due to disproportionally large number of classes in the dataset
                 # compared to others.
-                # cate_to_name[c["id"]] = (c["supercategory"], c["common_name"])
                 cate_to_name[c["id"]] = (c["supercategory"], c["class"])
             img_to_cate = {}
             for a in annos["annotations"]:
