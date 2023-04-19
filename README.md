@@ -19,7 +19,7 @@ This dataset is a contribution of our paper Batch-Model-Consolidation at CVPR 20
 ## Why Stream?
 
 Stream provides a method to train on interdisciplinary tasks by projecting all datasets on the same dimension.
-A collection of 83 datasets are currently in Stream with easy extension of more possible dataset.
+A collection of 82 datasets are currently in Stream with easy extension of more possible dataset.
 Stream offers convenient management to datasets and sourcing, and feature extraction utilities from
 pre-trained models to speed up & evaluate on downstream scenarios.
 
@@ -30,7 +30,7 @@ pre-trained models to speed up & evaluate on downstream scenarios.
 
 ### Feature Vectors
 
-We provide the preprocessed features to download for 83 datasets.
+We provide the preprocessed features to download for 82 datasets.
 Features from state-of-the-art models CLIP, GPT2, ResNet, and ViT support fast evaluation by training a small downstream model,
 as well as multi-modal learning. Our feature vector dataset is a **performant** memory mapped database.
 
@@ -73,7 +73,7 @@ Extract `stream_feats.tar` and put it under `root_path` of your choice.
 
 ### Basic Usage
 
-Easy to use with built-in 83 datasets and downloaded features.
+Easy to use with built-in 82 datasets and downloaded features.
 A single dataset can be loaded by specifying `task_id` with custom arguments passed by `datasets`.
 The dataset is a Pytorch Dataset class and can be used with [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html) utilities.
 The list of supported datasets and their corresponding dataset names and task-ids can be found [HERE](assets/DATASET_TABLE.md).
