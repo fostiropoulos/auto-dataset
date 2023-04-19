@@ -56,14 +56,13 @@ For extracting features, you will need `ray` for distributed execution. No suppo
 Install Stream with the following commands:
 
 1. `git clone https://github.com/fostiropoulos/stream.git`
-2. `cd stream`
-3. `pip install . stream[dist]`
+2. `pip install stream[dist]`
 
 **Development**
 
 To contribute, you will need to install with option `[dev]`
 
-`pip install . stream[dev]`
+`pip install stream[dev]`
 
 ### [Download Features](https://drive.google.com/file/d/1insLK3FoGw-UEQUNnhzyxsql7z28lplZ/view?usp=sharing)
 
@@ -128,7 +127,7 @@ feats_ds = Stream(root_path, task_id=your_task_id, feats_name="clip")
 
 **Making dataset metadata**
 
-If not using the extracted features, you will need to download all 
+If not using the extracted features, you will need to download all
 data source files in the first run (download and processing is automated):
 
 ```
