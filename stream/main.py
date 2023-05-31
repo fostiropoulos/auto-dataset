@@ -72,7 +72,7 @@ class Stream(td.Dataset):
 
         dataset_classes = self.supported_datasets()
 
-        dataset_names: List[str] = sorted([ds.name.lower() for ds in dataset_classes])
+        dataset_names: List[str] = sorted([ds.__name__.lower() for ds in dataset_classes])
         self.dataset_map = collections.OrderedDict(
             (dict(zip(dataset_names, dataset_classes)).items())
         )
@@ -130,7 +130,7 @@ class Stream(td.Dataset):
         if export_all:
             s = self.root_path.glob("*/feats/")
         else:
-            s = [self.root_path.joinpath(p, "feats") for p in self.dataset_map]
+            s = [self.root_path.joinpath(p.__name__.lower(), "feats") for _,p in self.dataset_map.items()]
 
         for ds_feats_folder in tqdm.tqdm(s, desc="Exporting features"):
             metadata = ds_feats_folder.parent.joinpath("metadata.pickle")
@@ -302,7 +302,7 @@ class Stream(td.Dataset):
                     and attribute != Dataset
                 ):
                     # Add the class to this package's variables
-                    globals()[attribute_name] = attribute
+                    globals()[attribute.name] = attribute
                     dataset_classes.append(attribute)
                     break
             if attribute is None:
