@@ -84,3 +84,6 @@ from stream.datasets.watermarked import Watermarked
 from stream.datasets.weather import Weather
 from stream.datasets.yelp import Yelp
 from stream.datasets.zalando import Zalando
+from stream.datasets.domainnet_real import DomainNetReal
+from stream.datasets.domainnet_sketch import DomainNetSketch
+from stream.datasets.imdb import Imdb
