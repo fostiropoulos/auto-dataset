@@ -64,6 +64,8 @@ class Dataset(BaseDataset, ABC):
         super().__init__()
         self.root_path = Path(root_path)
         self.class_name: str = self.__class__.__name__
+        # TODO change to self.name but write a check for conflicting names, as it can cause over-writing. For example a user specifying duplicate self.name. In principle the same thing for self.class_name
+        # self.dataset_path = Path(root_path).joinpath(self.name)
         self.dataset_path = Path(root_path).joinpath(self.class_name.lower())
         self.metadata_path = self.dataset_path.joinpath("metadata.pickle")
         self.feats_path = self.dataset_path.joinpath("feats")
