@@ -10,11 +10,6 @@ Stream can automatically download and process dataset from:
 
 It can be extended to any dataset where only the logic of extracting and processing the dataset is required via sub-classing and method over-writing of a [Dataset](stream/dataset.py) class.
 
-This dataset is a contribution of our paper Batch-Model-Consolidation at CVPR 2023. Please cite:
-
-```
-
-```
 
 ## Why Stream?
 
