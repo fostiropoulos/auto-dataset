@@ -3,12 +3,12 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="stream",
+    name="autods",
     version="1.0",
-    description="Stream Dataset",
+    description="AutoDataset",
     author="Iordanis Fostiropoulos",
-    author_email="dev@iordanis.xyz",
-    url="https://iordanis.xyz/",
+    author_email="mail@iordanis.me",
+    url="https://iordanis.me/",
     python_requires=">3.10",
     long_description=open("README.md").read(),
     packages=find_packages(),

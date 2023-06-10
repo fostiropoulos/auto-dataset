@@ -19,7 +19,7 @@ import torch.utils.data as td
 import tqdm
 from torch.utils.data import ConcatDataset
 
-from stream.dataset import Dataset
+from autods.dataset import Dataset
 
 PACKAGE_DATASET_DIR = Path(__file__).parent.joinpath("datasets").resolve().as_posix()
 
@@ -50,7 +50,7 @@ def make_ds(ds_class, args):
     return ds_class(**args)
 
 
-class Stream(td.Dataset):
+class AutoDS(td.Dataset):
     def __init__(
         self,
         root_path: Path,
@@ -291,7 +291,7 @@ class Stream(td.Dataset):
         dataset_classes: List[Type[Dataset]] = []
         for _, module_name, _ in iter_modules([PACKAGE_DATASET_DIR]):
             # import the module and iterate through its attributes
-            module = import_module(f"stream.datasets.{module_name}")
+            module = import_module(f"autods.datasets.{module_name}")
             attribute = None
             for attribute_name in dir(module):
                 attribute = getattr(module, attribute_name)

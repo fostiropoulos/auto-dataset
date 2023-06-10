@@ -15,13 +15,13 @@ import torch
 from git import Repo
 from PIL import Image, ImageFile
 from tqdm import tqdm
-from stream._base_dataset import BaseDataset
-from stream.feat_extractors import FeatExtractor
-from stream.feat_extractors.clip import ClipModel
-from stream.feat_extractors.gpt2 import GPT2
-from stream.feat_extractors.resnet import ResnetModel
-from stream.feat_extractors.vit import ViT
-from stream.utils import download_file
+from autods._base_dataset import BaseDataset
+from autods.feat_extractors import FeatExtractor
+from autods.feat_extractors.clip import ClipModel
+from autods.feat_extractors.gpt2 import GPT2
+from autods.feat_extractors.resnet import ResnetModel
+from autods.feat_extractors.vit import ViT
+from autods.utils import download_file
 
 
 # NOTE: this property should be set really high.

@@ -3,7 +3,7 @@ from typing import List
 import torch
 from transformers import GPT2Model, GPT2Tokenizer, logging
 
-from stream.feat_extractors import FeatExtractor
+from autods.feat_extractors import FeatExtractor
 
 from PIL import Image
 

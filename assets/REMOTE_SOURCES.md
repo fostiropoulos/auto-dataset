@@ -8,7 +8,7 @@ for competition datasets
 
 Example: Apparel, Aptos2019
 
-```
+```python
 remote_urls = {
     "apparel-images-dataset.zip": "kaggle datasets download -d trolukovich/apparel-images-dataset",
 }
@@ -21,7 +21,7 @@ remote_urls = {
 
 Example: Stanford Cars
 
-```
+```python
 remote_urls = {
     "cars_train.tgz": "http://ai.stanford.edu/~jkrause/car196/cars_train.tgz",
     "cars_test.tgz": "http://ai.stanford.edu/~jkrause/car196/cars_test.tgz",
@@ -47,7 +47,7 @@ remote_urls = {
 
 Set the values in `remote_urls` to None to load from local disk.
 
-```
+```python
 remote_urls = {
     "your-local-file": None,
 }
@@ -68,15 +68,15 @@ remote_urls = {
 
 ## Processing Downloaded Files
 
-Stream dataset loads the image dataset from individual image files similar to [PyTorch ImageFolder](https://pytorch.org/vision/main/generated/torchvision.datasets.ImageFolder.html).
+AutoDS dataset loads the image dataset from individual image files similar to [PyTorch ImageFolder](https://pytorch.org/vision/main/generated/torchvision.datasets.ImageFolder.html).
 You will need to extract from the downloaded files and create a metadata mapping from image path to the label.
 For text datasets, the metadata should be a mapping from text input to the label.
 
-If the downloaded data files are archive files (e.g. `.zip`, `.tar.gz`, `.rar`), 
+If the downloaded data files are archive files (e.g. `.zip`, `.tar.gz`, `.rar`),
 you can extract them in the dataset's `_process()` function by:
 
-```
-from stream.utils import extract, is_archive
+```python
+from autods.utils import extract, is_archive
 
 def _process(self, raw_data_dir: Path):
     for archive in self.remote_urls.keys():
@@ -87,6 +87,6 @@ def _process(self, raw_data_dir: Path):
             extract(archive_path, save_path)
 ```
 
-If the downloaded images are stored in structured files like 
+If the downloaded images are stored in structured files like
 `.h5`, `.pt`, `.mat`, and `.npy`, you need to extract the images and save as separate image files.
-See [galaxy10.py](/stream/datasets/galaxy10.py) for an example.
+See [galaxy10.py](/autods/datasets/galaxy10.py) for an example.

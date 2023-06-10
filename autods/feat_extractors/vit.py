@@ -7,8 +7,8 @@ from transformers import (
 import torch
 from transformers import logging
 
-from stream.feat_extractors import FeatExtractor
-from stream.utils import isImageType
+from autods.feat_extractors import FeatExtractor
+from autods.utils import isImageType
 
 
 class ViT(FeatExtractor):

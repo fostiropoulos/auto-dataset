@@ -6,8 +6,8 @@ import torch
 from PIL import Image
 from transformers import CLIPModel, CLIPProcessor, CLIPTokenizer, logging
 
-from stream.feat_extractors import FeatExtractor
-from stream.utils import isImageType
+from autods.feat_extractors import FeatExtractor
+from autods.utils import isImageType
 
 
 class ClipModel(FeatExtractor):

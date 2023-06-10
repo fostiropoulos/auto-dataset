@@ -17,9 +17,9 @@ from torchvision import transforms
 from tqdm import tqdm
 from transformers import CLIPTokenizer
 
-from stream.dataset import Dataset
-from stream.main import Stream
-from stream.utils import extract
+from autods.dataset import Dataset
+from autods.main import AutoDS
+from autods.utils import extract
 
 vision_transform = transforms.Compose(
     [
@@ -225,7 +225,7 @@ def test_stream(tmp_path: Path):
     datasets = [MockDataset, MockDataset2]
     sizes = (np.arange(len(datasets)) + 1) * 100
     with mock.patch(
-        "stream.main.Stream.supported_datasets",
+        "autods.main.AutoDS.supported_datasets",
         return_value=datasets,
     ):
         with tempfile.TemporaryDirectory() as fp:
@@ -234,7 +234,7 @@ def test_stream(tmp_path: Path):
                 dataset_kwargs[ds.name] = {"size": size}
 
         # Passing global argument
-        ds = Stream(tmp_path, dataset_kwargs=dataset_kwargs, mock_download=True)
+        ds = AutoDS(tmp_path, dataset_kwargs=dataset_kwargs, mock_download=True)
 
         for p in ds:
             pass
@@ -247,9 +247,9 @@ def test_stream(tmp_path: Path):
             _change_task,
             f"Can not change task_id after initialization.",
         )
-        ds = Stream(tmp_path, task_id=0)
+        ds = AutoDS(tmp_path, task_id=0)
         assert len(ds) == sizes[0]
-        ds = Stream(tmp_path, task_id=1)
+        ds = AutoDS(tmp_path, task_id=1)
         assert len(ds) == sizes[1]
 
 
@@ -257,25 +257,25 @@ def test_stream_make(tmp_path: Path):
     datasets = [MockDataset, MockDataset2]
     sizes = (np.arange(len(datasets)) + 1) * 100
     with mock.patch(
-        "stream.main.Stream.supported_datasets",
+        "autods.main.AutoDS.supported_datasets",
         return_value=datasets,
     ):
         for ds, size in zip(datasets, sizes):
             ds(tmp_path, size=size, mock_download=True)
 
         with mock.patch(
-            "stream.dataset.Dataset.assert_downloaded", return_value=True
-        ), mock.patch("stream.dataset.Dataset.verify_downloaded", return_value=True):
+            "autods.dataset.Dataset.assert_downloaded", return_value=True
+        ), mock.patch("autods.dataset.Dataset.verify_downloaded", return_value=True):
             # Passing global argument
             import ray
 
             ray.init()
-            ds = Stream(
+            ds = AutoDS(
                 tmp_path,
                 clean=True,
                 make=True,
             )
-            ds = Stream(
+            ds = AutoDS(
                 tmp_path,
                 feats_name="clip",
                 make=True,
@@ -283,7 +283,7 @@ def test_stream_make(tmp_path: Path):
                 batch_size=128,
                 num_gpus=0.2,
             )
-            ds = Stream(
+            ds = AutoDS(
                 tmp_path,
                 feats_name="clip",
             )
@@ -307,7 +307,7 @@ def test_all_dataset(
             "imdb": {"transform": text_transform},
         }
         kwargs["transform"] = (vision_transform,)
-    s = Stream(root_path, datasets=datasets, feats_name=feats_name, **kwargs)
+    s = AutoDS(root_path, datasets=datasets, feats_name=feats_name, **kwargs)
     import multiprocessing as mp
 
     procs: list[mp.Process] = []
@@ -332,7 +332,7 @@ def test_all_dataset(
 def test_features_vision(root_path: Path, verbose: bool = False):
     datasets = [
         d.name
-        for d in Stream.supported_datasets()
+        for d in AutoDS.supported_datasets()
         if d.name not in {"amazon", "yelp", "imdb"}
     ]
     test_all_dataset(root_path, feats_name="clip", datasets=datasets, verbose=verbose)
@@ -353,10 +353,10 @@ def test_features_text(root_path: Path, verbose: bool = False):
 def test_make_features_vision(root_path: Path):
     datasets = [
         d.name
-        for d in Stream.supported_datasets()
+        for d in AutoDS.supported_datasets()
         if d.name not in {"amazon", "yelp", "imdb"}
     ]
-    s = Stream(
+    s = AutoDS(
         root_path,
         transform=vision_transform,
         datasets=datasets,
@@ -371,7 +371,7 @@ def test_make_features_vision(root_path: Path):
 @pytest.mark.slow
 def test_make_features_text(root_path: Path):
     datasets = ["amazon", "yelp", "imdb"]
-    s = Stream(
+    s = AutoDS(
         root_path,
         transform=text_transform,
         datasets=datasets,
@@ -384,7 +384,7 @@ def test_make_features_text(root_path: Path):
 
 @pytest.mark.slow
 def test_export_feats(root_path: Path, tmp_path:Path):
-    s = Stream(
+    s = AutoDS(
         root_path,
     )
     s.export_feats(tmp_path)

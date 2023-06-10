@@ -2,8 +2,8 @@ import logging
 from pathlib import Path
 import pandas as pd
 
-from stream.main import Stream
-from stream import datasets
+from autods.main import AutoDS
+from autods import datasets
 
 ASSETS_FOLDER = Path(__file__).parent.parent.joinpath("assets")
 
@@ -11,7 +11,7 @@ ASSETS_FOLDER = Path(__file__).parent.parent.joinpath("assets")
 def test_datasets():
     ds_list = []
 
-    datasets = Stream.supported_datasets()
+    datasets = AutoDS.supported_datasets()
     for ds in datasets:
         assert isinstance(ds.task_names, list) and len(ds.task_names) > 0
         assert isinstance(ds.remote_urls, dict) and len(ds.remote_urls) > 0
@@ -37,13 +37,13 @@ def test_stream():
 
     root_path = Path.home().joinpath("stream_ds")
 
-    # datasets = Stream.find_datasets(PACKAGE_DATASET_DIR)
+    # datasets = AutoDS.find_datasets(PACKAGE_DATASET_DIR)
     # ray.init(address = "auto")
-    s = Stream(root_path, task_id=0)
+    s = AutoDS(root_path, task_id=0)
     s.export_feats(Path.home().joinpath("stream_ds_feats"))
     pass
 
-    # s = Stream(root_path, returnt_feats=False, exclude=["imdb"])
+    # s = AutoDS(root_path, returnt_feats=False, exclude=["imdb"])
     # # s.make_features(
     # #     batch_size=128, num_gpus=0.1, clean_make=True, feature_extractor="resnet"
     # # )
@@ -62,24 +62,24 @@ def test_stream():
     # for ds in datasets:
     #     if ds.__name__.lower() in repeat_ds_vit:
     #         logging.warning(f"Making {ds.__name__}")
-    #         # Stream.make_dataset_features(ds, root_path, 2048, True, "resnet")
+    #         # AutoDS.make_dataset_features(ds, root_path, 2048, True, "resnet")
 
-    #         # Stream.make_dataset_features(ds, root_path, 512, True, "vit")
+    #         # AutoDS.make_dataset_features(ds, root_path, 512, True, "vit")
     #         remotes.append(
     #             ray.remote(num_gpus=1, max_calls=1)(
-    #                 Stream.make_dataset_features
+    #                 AutoDS.make_dataset_features
     #             ).remote(ds, root_path, 512, True, "vit")
     #         )
     #         # break
     # ray.get(remotes)
 
     # s.make_dataset_features(dss[0], root_path, 128, clean_make=True)
-    # s = Stream(root_path, task_id=0, return_feats=True)
-    # for i, task in enumerate(Stream.find_datasets(DATASET_CLASS_FOLDER)):
-    #     s = Stream(root_path, make=True, return_feats=False)
+    # s = AutoDS(root_path, task_id=0, return_feats=True)
+    # for i, task in enumerate(AutoDS.find_datasets(DATASET_CLASS_FOLDER)):
+    #     s = AutoDS(root_path, make=True, return_feats=False)
 
-    # Stream.make_dataset(task, kwargs=dict(root_path=root_path))
-    # s = Stream(root_path, return_feats=False, task_id=i)
+    # AutoDS.make_dataset(task, kwargs=dict(root_path=root_path))
+    # s = AutoDS(root_path, return_feats=False, task_id=i)
     # s.verify()
     # s.assert_dataset()
 

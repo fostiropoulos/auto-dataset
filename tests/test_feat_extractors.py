@@ -4,12 +4,12 @@ from typing import Literal
 
 import requests
 from PIL import Image
-from stream.feat_extractors import FeatExtractor
+from autods.feat_extractors import FeatExtractor
 
-from stream.feat_extractors.clip import ClipModel
-from stream.feat_extractors.gpt2 import GPT2
-from stream.feat_extractors.resnet import ResnetModel
-from stream.feat_extractors.vit import ViT
+from autods.feat_extractors.clip import ClipModel
+from autods.feat_extractors.gpt2 import GPT2
+from autods.feat_extractors.resnet import ResnetModel
+from autods.feat_extractors.vit import ViT
 import torch
 
 lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
