@@ -13,37 +13,13 @@ import pytest
 import ray
 import torch
 from PIL import Image
-from torchvision import transforms
-from tqdm import tqdm
-from transformers import CLIPTokenizer
 
 from autods.dataset import Dataset
 from autods.main import AutoDS
 from autods.utils import extract
 
-vision_transform = transforms.Compose(
-    [
-        transforms.Resize(32),
-        transforms.CenterCrop(32),
-        transforms.ToTensor(),
-    ]
-)
-tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
-
-
-def text_transform(text):
-    return (
-        tokenizer(
-            text=text,
-            padding="max_length",
-            max_length=32**2 * 3,
-            truncation=True,
-            return_tensors="pt",
-        )["input_ids"]
-        .reshape(3, 32, 32)
-        .type(torch.float)
-    )
-
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+BATCH_SIZE = 12
 
 def assert_error_msg(fn, error_msg: str | None = None):
     try:
@@ -54,21 +30,6 @@ def assert_error_msg(fn, error_msg: str | None = None):
             raise excp
         else:
             return str(excp)
-
-
-def run_ds(ds: type[Dataset], args, verbose: bool = False):
-    try:
-        _ds = ds(**args)
-        if verbose:
-            _ds = tqdm(_ds)
-            _ds.set_description(str(ds.__name__))
-        for i in _ds:
-            pass
-    except Exception as e:
-        logging.error(f"Error with {ds.__name__}")
-        # if verbose:
-        #     raise e
-    pass
 
 
 def capture_output(fn, caplog=None):
@@ -85,9 +46,6 @@ def capture_output(fn, caplog=None):
         err = err.getvalue()
 
     return out.getvalue(), err
-
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class MockDataset(Dataset):
@@ -174,7 +132,9 @@ def test_dataset(
     with tempfile.TemporaryDirectory() as fp:
         ds = ds_class(fp)
         assert assert_error_msg(lambda: ds.assert_downloaded()).endswith(" is missing.")
-        assert assert_error_msg(lambda: ds.process()).endswith(" is missing.")
+        assert assert_error_msg(lambda: ds.process()).endswith(
+            " to use `download(clean=True)` before processing."
+        )
         ds.dataset_path.mkdir()
         ds.dataset_path.joinpath("test.txt").write_text("a")
         assert_error_msg(
@@ -228,10 +188,9 @@ def test_stream(tmp_path: Path):
         "autods.main.AutoDS.supported_datasets",
         return_value=datasets,
     ):
-        with tempfile.TemporaryDirectory() as fp:
-            dataset_kwargs = {}
-            for ds, size in zip(datasets, sizes):
-                dataset_kwargs[ds.name] = {"size": size}
+        dataset_kwargs = {}
+        for ds, size in zip(datasets, sizes):
+            dataset_kwargs[ds.__name__.lower()] = {"size": size}
 
         # Passing global argument
         ds = AutoDS(tmp_path, dataset_kwargs=dataset_kwargs, mock_download=True)
@@ -280,7 +239,7 @@ def test_stream_make(tmp_path: Path):
                 feats_name="clip",
                 make=True,
                 clean=True,
-                batch_size=128,
+                batch_size=BATCH_SIZE,
                 num_gpus=0.2,
             )
             ds = AutoDS(
@@ -288,120 +247,11 @@ def test_stream_make(tmp_path: Path):
                 feats_name="clip",
             )
             ds.verify()
-        breakpoint()
         return
 
 
-@pytest.mark.slow
-def test_all_dataset(
-    root_path: Path,
-    feats_name: str | None = None,
-    verbose: bool = False,
-    datasets: list[str] | None = None,
-):
-    kwargs = {}
-    if feats_name is None:
-        kwargs["dataset_kwargs"] = {
-            "amazon": {"transform": text_transform},
-            "yelp": {"transform": text_transform},
-            "imdb": {"transform": text_transform},
-        }
-        kwargs["transform"] = (vision_transform,)
-    s = AutoDS(root_path, datasets=datasets, feats_name=feats_name, **kwargs)
-    import multiprocessing as mp
-
-    procs: list[mp.Process] = []
-    for train in [False, True]:
-        for i, ds in enumerate(s.dataset_classes):
-            args = copy.deepcopy(s.dataset_kwargs[s.task_names[i]])
-            args["train"] = train
-
-
-            p = mp.Process(target=run_ds, args=(ds, args, verbose), name=ds.__name__)
-            p.start()
-            procs.append(p)
-    for p in procs:
-        p.join()
-
-    breakpoint()
-    return
-    pass
-
-
-@pytest.mark.slow
-def test_features_vision(root_path: Path, verbose: bool = False):
-    datasets = [
-        d.name
-        for d in AutoDS.supported_datasets()
-        if d.name not in {"amazon", "yelp", "imdb"}
-    ]
-    test_all_dataset(root_path, feats_name="clip", datasets=datasets, verbose=verbose)
-    return
-    pass
-
-
-@pytest.mark.slow
-def test_features_text(root_path: Path, verbose: bool = False):
-    datasets = ["amazon", "yelp", "imdb"]
-    test_all_dataset(root_path, feats_name="gpt2", datasets=datasets, verbose=verbose)
-    breakpoint()
-    return
-    pass
-
-
-@pytest.mark.slow
-def test_make_features_vision(root_path: Path):
-    datasets = [
-        d.name
-        for d in AutoDS.supported_datasets()
-        if d.name not in {"amazon", "yelp", "imdb"}
-    ]
-    s = AutoDS(
-        root_path,
-        transform=vision_transform,
-        datasets=datasets,
-    )
-    ray.init()
-    s.make_features(128, 6 / 40, feats_name="clip")
-    breakpoint()
-    return
-    pass
-
-
-@pytest.mark.slow
-def test_make_features_text(root_path: Path):
-    datasets = ["amazon", "yelp", "imdb"]
-    s = AutoDS(
-        root_path,
-        transform=text_transform,
-        datasets=datasets,
-    )
-    ray.init()
-    s.make_features(128, 1, feats_name="gpt2")
-    breakpoint()
-    return
-    pass
-
-@pytest.mark.slow
-def test_export_feats(root_path: Path, tmp_path:Path):
-    s = AutoDS(
-        root_path,
-    )
-    s.export_feats(tmp_path)
-
-    return
-    pass
-
-
 if __name__ == "__main__":
-    root_path = Path().home().joinpath("stream_ds")
-    test_export_feats(root_path, tmp_path=Path().home().joinpath("stream_feats"))
-    # test_features_vision(root_path, verbose=True)
-    # test_features_text(root_path, verbose=True)
-    # test_all_dataset(root_path, verbose=True, feats_name="clip")
-    # test_make_features_vision(Path().home().joinpath("stream_ds"))
-    # test_make_features_text(Path().home().joinpath("stream_ds"))
-    # test_all_dataset(Path().home().joinpath("stream_ds"))
+
     # with tempfile.TemporaryDirectory() as fp:
     #     test_dataset(Path(fp), caplog=None)
 
@@ -411,5 +261,5 @@ if __name__ == "__main__":
     # with tempfile.TemporaryDirectory() as fp:
     #     test_stream(Path(fp))
 
-    # with tempfile.TemporaryDirectory() as fp:
-    #     test_stream_make(Path(fp))
+    with tempfile.TemporaryDirectory() as fp:
+        test_stream_make(Path(fp))
