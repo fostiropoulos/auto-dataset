@@ -8,12 +8,12 @@ AutoDS can automatically download and process dataset from:
 * Locally stored
 * git repository
 
-It can be extended to any dataset where only the logic of extracting and processing the dataset is required via sub-classing and method over-writing of a [Dataset](stream/dataset.py) class.
+It can be extended to any dataset where only the logic of extracting and processing the dataset is required via sub-classing and method over-writing of a [Dataset](autods/dataset.py) class.
 
-
+![autods](assets/autods.png)
 ## Why Auto-Dataset?
 
-AutoDS provides a method automatically construct a sequence of tasks by projecting multiple datasets on the same dimension.
+AutoDS provides a method to automatically construct a sequence of tasks by projecting multiple datasets on the same dimension.
 A collection of 82 datasets are currently in AutoDS with easy extension of more possible dataset.
 AutoDS offers convenient management to datasets and sourcing, and feature extraction utilities from
 pre-trained models to speed up & evaluate on downstream scenarios.
@@ -50,8 +50,7 @@ For extracting features, you will need `ray` for distributed execution. There is
 
 Install AutoDS with the following commands:
 
-1. `git clone https://github.com/fostiropoulos/auto-dataset.git`
-2. `pip install autods[dist]`
+`pip install autods[dist]`
 
 **Development**
 
@@ -187,3 +186,15 @@ ds.make_features(batch_size, 'cuda', feats_name="clip", clean=True)
 The feature dataset can be loaded as in Basic Usage.
 
 
+## Cite
+
+
+```
+@inproceedings{fostiropoulos2023batch,
+  title={Batch Model Consolidation: A Multi-Task Model Consolidation Framework},
+  author={Fostiropoulos, Iordanis and Zhu, Jiaye and Itti, Laurent},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={3664--3676},
+  year={2023}
+}
+```

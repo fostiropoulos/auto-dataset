@@ -49,7 +49,7 @@ def capture_output(fn, caplog=None):
 
 
 class MockDataset(Dataset):
-    metadata_url = "https://iordanis.xyz/"
+    metadata_url = "https://iordanis.me/"
     remote_urls = {"mock.tar": None}
     name = "mock"
     file_hash_map = {"mock.tar": "blahblah"}
