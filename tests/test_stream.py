@@ -1,7 +1,6 @@
 import copy
 import logging
 from pathlib import Path
-
 import ray
 import torch
 from torchvision import transforms
@@ -80,10 +79,6 @@ def test_all_dataset(
     for p in procs:
         p.join()
 
-    breakpoint()
-    return
-    pass
-
 
 def test_features_vision(root_path: Path, verbose: bool = False):
     datasets = [
@@ -92,16 +87,10 @@ def test_features_vision(root_path: Path, verbose: bool = False):
         if d.name not in {"amazon", "yelp", "imdb"}
     ]
     test_all_dataset(root_path, feats_name="clip", datasets=datasets, verbose=verbose)
-    return
-    pass
-
 
 def test_features_text(root_path: Path, verbose: bool = False):
     datasets = ["amazon", "yelp", "imdb"]
     test_all_dataset(root_path, feats_name="gpt2", datasets=datasets, verbose=verbose)
-    breakpoint()
-    return
-    pass
 
 
 def test_make_features_vision(root_path: Path):
@@ -117,9 +106,7 @@ def test_make_features_vision(root_path: Path):
     )
     ray.init()
     s.make_features(128, 6 / 40, feats_name="clip")
-    breakpoint()
-    return
-    pass
+
 
 
 def test_make_features_text(root_path: Path):
@@ -131,9 +118,7 @@ def test_make_features_text(root_path: Path):
     )
     ray.init()
     s.make_features(128, 1, feats_name="gpt2")
-    breakpoint()
-    return
-    pass
+
 
 
 def test_export_feats(root_path: Path, tmp_path: Path):
@@ -142,4 +127,8 @@ def test_export_feats(root_path: Path, tmp_path: Path):
     )
     s.export_feats(tmp_path)
 
-    return
+
+if __name__=="__main__":
+    root_path = Path("/media/hdd/stream_2nd/")
+    # test_all_dataset(root_path)
+    all_ds = AutoDS(root_path, make=True)

@@ -215,6 +215,12 @@ def test_stream(tmp_path: Path):
 def test_stream_make(tmp_path: Path):
     datasets = [MockDataset, MockDataset2]
     sizes = (np.arange(len(datasets)) + 1) * 100
+
+    ray.init(
+        runtime_env={
+            "working_dir": Path(__file__).parent,
+        }
+    )
     with mock.patch(
         "autods.main.AutoDS.supported_datasets",
         return_value=datasets,
@@ -225,10 +231,7 @@ def test_stream_make(tmp_path: Path):
         with mock.patch(
             "autods.dataset.Dataset.assert_downloaded", return_value=True
         ), mock.patch("autods.dataset.Dataset.verify_downloaded", return_value=True):
-            # Passing global argument
-            import ray
 
-            ray.init()
             ds = AutoDS(
                 tmp_path,
                 clean=True,
@@ -247,11 +250,12 @@ def test_stream_make(tmp_path: Path):
                 feats_name="clip",
             )
             ds.verify()
-        return
+    ray.shutdown()
+    return True
 
 
 if __name__ == "__main__":
-
+    pass
     # with tempfile.TemporaryDirectory() as fp:
     #     test_dataset(Path(fp), caplog=None)
 
@@ -261,5 +265,5 @@ if __name__ == "__main__":
     # with tempfile.TemporaryDirectory() as fp:
     #     test_stream(Path(fp))
 
-    with tempfile.TemporaryDirectory() as fp:
-        test_stream_make(Path(fp))
+    # with tempfile.TemporaryDirectory() as fp:
+    #     test_stream_make(Path(fp))
