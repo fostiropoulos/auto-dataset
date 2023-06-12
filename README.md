@@ -1,5 +1,7 @@
 # Auto-Dataset (AutoDS)
 
+![autods](assets/autods.png)
+
 This repository implements the logic for processing and managing a large sequence of datasets.
 
 AutoDS can automatically download and process dataset from:
@@ -10,7 +12,6 @@ AutoDS can automatically download and process dataset from:
 
 It can be extended to any dataset where only the logic of extracting and processing the dataset is required via sub-classing and method over-writing of a [Dataset](autods/dataset.py) class.
 
-![autods](assets/autods.png)
 ## Why Auto-Dataset?
 
 AutoDS provides a method to automatically construct a sequence of tasks by projecting multiple datasets on the same dimension.
@@ -48,19 +49,19 @@ to setup Kaggle.
 
 For extracting features, you will need `ray` for distributed execution. There is no support without using ray as it is prohibitively slow.
 
-Install AutoDS with the following commands:
+There are optional dependencies for feature extraction not included with AutoDS. You will need to install with the following commands:
 
 `pip install autods[dist]`
 
 **Development**
 
-To contribute, you will need to install with option `[dev]`
+To contribute to this repository, you will need to install with option `[dev]`
 
 `pip install autods[dev]`
 
 ### [Download Features](https://drive.google.com/file/d/1insLK3FoGw-UEQUNnhzyxsql7z28lplZ/view?usp=sharing)
 
-Extract `stream_feats.tar` and put it under `root_path` of your choice.
+Extract `stream_feats.tar` and place it on the `root_dir` of your choice.
 
 ## Examples
 
@@ -68,8 +69,8 @@ Extract `stream_feats.tar` and put it under `root_path` of your choice.
 
 **Loading a single dataset**
 
-Easy to use with built-in 82 datasets and pre-processed feature vectors.
-A single dataset can be loaded by specifying `task_id` with custom arguments passed by `datasets_kwargs`.
+Easy to use the built-in 82 datasets with the pre-processed feature vectors.
+A single dataset can be loaded by specifying `task_id` while arguments specific to the dataset can be passed by `datasets_kwargs`.
 The dataset is a Pytorch Dataset class and can be used with [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html) utilities.
 The list of supported datasets and their corresponding dataset names and task-ids can be found [HERE](assets/DATASET_TABLE.md).
 An example:
@@ -90,7 +91,7 @@ dl = DataLoader(ds, *args, **kwargs)
 
 **Loading a subset of all datasets**
 
-Specify a list of datasets to use only a subset of datasets.
+To use a subset of datasets you can specify them as a list by their name.
 
 **IMPORTANT**: task-ids will be re-mapped by the alphabetical order of the list of datasets.
 
@@ -103,36 +104,39 @@ ds_cifar10 = AutoDS(root_path, task_id=0, datasets=use_datasets)
 
 **Loading all datasets as one big dataset**
 
-Alternatively, load all datasets as a `ConcatDataset` by not specifying `task_id`:
+Alternatively, load all datasets as a `ConcatDataset` by setting `task_id=None`:
 
 ```python
 # load all datasets
-all_ds = AutoDS(root_path, datasets=custom_args)
+all_ds = AutoDS(root_path, task_id=None, datasets=custom_args)
 dl = DataLoader(all_ds, *args, **kwargs)
 ```
 
 **Using extracted feature vectors**
 
-Load the dataset with extracted features (must download or extract features first):
+After having downloaded and extracted the feature vectors from the previous step, you can load the feature vectors corresponding to the default extractor of each dataset by setting `feats_name="default"`:
 
 ```python
 # load dataset as feature vectors
-feats_ds = AutoDS(root_path, task_id=your_task_id, feats_name="clip")
+feats_ds = AutoDS(root_path, task_id=your_task_id, feats_name="default")
 ```
 
 **Making dataset metadata**
 
-If not using the extracted features, you will need to download all
-data source files in the first run (download and processing is automated):
+If not using the extracted features, you will need to download the
+data source files where downloading and processing is automated:
 
 ```python
 # load dataset as raw images/texts
 raw_ds = AutoDS(root_path, task_id=your_task_id, make=True)
 ```
 
+**NOTE** as our pre-processing method depends on dataset hosted by third-parties that can change both the dataset contents or distribution methods, many of the datasets currently included in Auto-Dataset fail to Download with modifying our updating the existing dataset class. We are working on re-distributing the dataset for which there is a permisive license to do so.
+
 ### Adding New Dataset
 
-You can fork this repository and add your own dataset.
+You can fork this repository and add your own dataset and you are welcome to create a PR.
+
 Follow the example in [test_dataset.py](tests/test_dataset.py) and complete the following abstract properties/methods:
 
 - `metadata_url`: Url to dataset webpage.
@@ -189,7 +193,7 @@ The feature dataset can be loaded as in Basic Usage.
 ## Cite
 
 
-```
+```bibtex
 @inproceedings{fostiropoulos2023batch,
   title={Batch Model Consolidation: A Multi-Task Model Consolidation Framework},
   author={Fostiropoulos, Iordanis and Zhu, Jiaye and Itti, Laurent},
